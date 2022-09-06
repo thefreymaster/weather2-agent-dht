@@ -30,9 +30,40 @@ const getSensorReading = () => {
   });
 };
 
-app.get("/status", async (request, response) => {
+const setNewData = (temperature, humidity) => {
+  const now = new Date();
+  db.ref(`/${config?.room_id}/temperature`).push({
+    x: now.toISOString(),
+    y: temperature,
+  });
+  db.ref(`/${config?.room_id}/humidity`).push({
+    x: now.toISOString(),
+    y: humidity,
+  });
+};
+
+const convertToF = (celsius) => {
+  return celsius * (9 / 5) + 32;
+};
+
+const getNewWeatherData = () => {
+  sensor.read(11, 4, function (err, temperature, humidity) {
+    if (!err) {
+      setNewData(convertToF(temperature), humidity);
+    }
+  })
+};
+
+const run = () => {
+  setTimeout(() => {
+    getNewWeatherData();
+    run();
+  }, 300000);
+};
+
+app.get("/*", async (req, res) => {
   const data = await getSensorReading();
-  response.send(data);
+  res.send(data);
 });
 
 server.listen(port, () => {
@@ -42,8 +73,8 @@ server.listen(port, () => {
     );
   }
   console.log(`Weather Agent DHT running on ${networkInterfaces}:${port}`);
-  // db.ref(`/rooms/${config?.room_id}`).push(config?.room_id);
-  // getNewWeatherData();
+  db.ref(`/rooms/${config?.room_id}`).push(config?.room_id);
+  getNewWeatherData();
 
-  // return run();
+  return run();
 });
