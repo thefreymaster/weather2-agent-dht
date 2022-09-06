@@ -63,7 +63,7 @@ const run = () => {
 
 app.get("/*", async (req, res) => {
   const data = await getSensorReading();
-  res.send(data);
+  return res.send(data);
 });
 
 server.listen(port, () => {
